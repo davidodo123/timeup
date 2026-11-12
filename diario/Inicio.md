@@ -8,11 +8,12 @@ Party game para móvil de adivinar palabras por equipos, con la dinámica de pas
 **Para quién:** grupos de amigos o familia en una fiesta o una cena, con un solo móvil.
 
 ## Enlaces
-- Repo: pendiente de crear en `github.com/davidodo123` (público, para que salga en el panel)
-- App: aún sin publicar. Se prueba con Expo Go (`npm start` y escanear el QR)
+- Repo: https://github.com/davidodo123/timeup
+- Web: en Vercel (URL pendiente al importar el repo)
+- Móvil: se prueba con Expo Go (`npm start` y escanear el QR)
 
 ## Fase actual
-Fase 1 · Necesario: base jugable completa, pendiente de que David pruebe una partida entera en el móvil.
+Fase 1 · Necesario: base jugable completa y subida a GitHub. Falta desplegar en Vercel y que David pruebe una partida entera.
 
 ## Cómo está hecho
 - Expo SDK 58 + React Native + TypeScript, rutas con Expo Router

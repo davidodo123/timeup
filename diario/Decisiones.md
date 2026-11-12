@@ -29,5 +29,8 @@ Qué se decidió, por qué y cuándo. No se borra: si algo cambia, se añade una
 ## Temporizador por marcas de tiempo
 **2026-11-12.** La cuenta atrás calcula `endsAt - ahora` en vez de restar cada segundo: no se desfasa si el móvil va cargado. La pausa mueve `endsAt` y también el cronómetro de la carta, para que las estadísticas de velocidad sean justas.
 
+## Versión web en Vercel
+**2026-11-12.** La app también se publica como web estática en Vercel (`npx expo export --platform web` → `dist/`, todo en una sola página con `web.output: "single"` y reescritura a `index.html`). Sirve para jugar desde el navegador del móvil sin instalar nada. Limitaciones: en iPhone (Safari) no hay vibración; en Android (Chrome) sí. Las apps nativas siguen siendo la Fase 3.
+
 ## Sonidos generados por script
 **2026-11-12.** Alarma, acierto, pase y tic se generan con `npm run sounds` (`scripts/generate-sounds.mjs`). Sin archivos de audio de terceros ni licencias.

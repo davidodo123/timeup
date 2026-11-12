@@ -17,8 +17,12 @@ Aquí van servicios, despliegue y nombres de variables. **Nunca valores secretos
 - `npx expo lint`: linter
 - `npm run sounds`: regenerar los sonidos de `assets/sounds/`
 
+## Repo
+- GitHub: https://github.com/davidodo123/timeup (rama `main`)
+
 ## Variables de entorno
-Ninguna por ahora.
+Ninguna. La app no usa servicios externos ni claves.
 
 ## Despliegue
-Pendiente: EAS Build para Android e iOS (Fase 3).
+- **Web (Vercel):** la configuración está en `vercel.json`: install `npm ci`, build `npx expo export --platform web`, salida `dist`, reescritura de todas las rutas a `/index.html`. Framework preset: *Other*.
+- **Nativo:** pendiente, EAS Build para Android e iOS (Fase 3).

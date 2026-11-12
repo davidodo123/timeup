@@ -19,8 +19,10 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[/]` empezado · `[-]` descartado
 - [x] Vibración al acertar/pasar y fuerte en los 5 últimos segundos; sonidos generados → [[Decisiones#Sonidos generados por script]]
 - [x] Podio, marcador por rondas y estadísticas divertidas
 - [x] Modo oscuro / claro / automático
+- [x] Subir el código a GitHub (`davidodo123/timeup`)
+- [x] Versión web lista para Vercel (export estático) → [[Decisiones#Versión web en Vercel]]
+- [ ] Importar el repo en Vercel y comprobar que la web carga (David)
 - [ ] Probar una partida completa en un móvil real con Expo Go (David)
-- [ ] Crear el repo público en GitHub y subirlo
 
 ## Fase 2 · Importante
 - [ ] Guardar la partida en curso por si se cierra la app

@@ -21,7 +21,11 @@
       "package": "com.davidodo.tresrondas"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single",
+      "name": "Tres Rondas",
+      "themeColor": "#0F0D1A",
+      "backgroundColor": "#0F0D1A"
     },
     "plugins": [
       "expo-router",
