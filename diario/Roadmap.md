@@ -19,6 +19,7 @@ Leyenda: `[x]` hecho · `[ ]` pendiente · `[/]` empezado · `[-]` descartado
 - [x] Vibración al acertar/pasar y fuerte en los 5 últimos segundos; sonidos generados → [[Decisiones#Sonidos generados por script]]
 - [x] Podio, marcador por rondas y estadísticas divertidas
 - [x] Modo oscuro / claro / automático
+- [x] Rediseño visual: carta como motivo, tipografía propia, controles segmentados → [[Decisiones#Rediseño: la carta como motivo]]
 - [x] Subir el código a GitHub (`davidodo123/timeup`)
 - [x] Versión web lista para Vercel (export estático) → [[Decisiones#Versión web en Vercel]]
 - [ ] Importar el repo en Vercel y comprobar que la web carga (David)

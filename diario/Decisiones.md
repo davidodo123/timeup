@@ -32,5 +32,13 @@ Qué se decidió, por qué y cuándo. No se borra: si algo cambia, se añade una
 ## Versión web en Vercel
 **2026-11-12.** La app también se publica como web estática en Vercel (`npx expo export --platform web` → `dist/`, todo en una sola página con `web.output: "single"` y reescritura a `index.html`). Sirve para jugar desde el navegador del móvil sin instalar nada. Limitaciones: en iPhone (Safari) no hay vibración; en Android (Chrome) sí. Las apps nativas siguen siendo la Fase 3.
 
+## Rediseño: la carta como motivo
+**2026-11-12.** La identidad visual sale del propio juego, no de una plantilla:
+- **La carta**: la palabra va en una carta de papel crema con tinta oscura en los dos temas (se lee mejor a distancia que texto claro sobre fondo oscuro). Debajo asoman los bordes del mazo que queda. Es el único elemento con sombra, porque es lo único que "flota".
+- **Las tres rondas** como tres cartitas numeradas: en la portada explican el juego y durante la partida dicen en qué ronda estás.
+- **Tipografía Bricolage Grotesque** (Google Fonts, licencia OFL): grotesca con carácter de cartel, muy legible en grande. Sustituye a la fuente del sistema.
+- **Paleta corta**: fondo tinta o crema, amarillo solo para el botón que hace avanzar el juego, verde/rojo solo para acertar/pasar, y el color de cada equipo en su pantalla de turno.
+- **Movimiento con propósito**: la carta nueva sube del mazo, sellos «¡SÍ!»/«PASO» al deslizar y el podio se revela de abajo arriba. Nada en bucle.
+
 ## Sonidos generados por script
 **2026-11-12.** Alarma, acierto, pase y tic se generan con `npm run sounds` (`scripts/generate-sounds.mjs`). Sin archivos de audio de terceros ni licencias.

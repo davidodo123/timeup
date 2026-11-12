@@ -1,16 +1,20 @@
 import { useCallback, useEffect } from 'react';
 import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { RoundPips } from '../components/RoundPips';
 import { Screen } from '../components/Screen';
 import { SwipeCard } from '../components/SwipeCard';
 import { TimerBar } from '../components/TimerBar';
+import { CATEGORIES } from '../data/cards';
 import { ROUND_RULES, WARNING_SECONDS } from '../game/constants';
-import { cardById, cardsLeft } from '../game/selectors';
+import { cardById } from '../game/selectors';
 import { useCountdown } from '../hooks/useCountdown';
 import { haptics } from '../services/haptics';
 import { useGameSounds } from '../services/useGameSounds';
 import { useGame, useGameActions } from '../state/GameProvider';
-import { radius, space, type as fontSize, useTheme } from '../theme/ThemeProvider';
+import { fonts, radius, space, type as fontSize, useTheme } from '../theme/ThemeProvider';
+
+const categoryName = new Map(CATEGORIES.map((c) => [c.id, c.name]));
 
 /** El turno en juego: temporizador, carta y botones de acertar / pasar. */
 export function PlayScreen() {
@@ -32,7 +36,7 @@ export function PlayScreen() {
       actions.timeUp();
     },
     onSecond: (sec) => {
-      if (sec > 0 && sec <= WARNING_SECONDS && turn.pausedAt === null) {
+      if (sec > 0 && sec <= WARNING_SECONDS) {
         play('tick');
         haptics.warning();
       }
@@ -64,43 +68,52 @@ export function PlayScreen() {
   return (
     <Screen style={styles.content}>
       <View style={styles.top}>
-        <View style={styles.topRow}>
-          <Text style={[styles.meta, { color: colors.textMuted }]}>{rule.short}</Text>
-          <Pressable
-            onPress={paused ? actions.resume : actions.pause}
-            accessibilityRole="button"
-            accessibilityLabel={paused ? 'Reanudar' : 'Pausar'}
-            style={[styles.pause, { backgroundColor: colors.surfaceAlt }]}
-            hitSlop={8}
-          >
-            <Text style={[styles.pauseText, { color: colors.text }]}>{paused ? '▶' : 'II'}</Text>
-          </Pressable>
-        </View>
+        <RoundPips round={state.round} />
         <TimerBar remainingMs={remainingMs} totalMs={turn.durationMs} />
+        <Pressable
+          onPress={paused ? actions.resume : actions.pause}
+          accessibilityRole="button"
+          accessibilityLabel={paused ? 'Reanudar' : 'Pausar'}
+          style={[styles.pause, { backgroundColor: colors.surfaceAlt }]}
+          hitSlop={8}
+        >
+          <Text style={[styles.pauseText, { color: colors.text }]}>{paused ? '▶' : 'II'}</Text>
+        </Pressable>
       </View>
 
       <View style={styles.cardArea}>
         {paused ? (
+          // En pausa se tapa la palabra para que nadie la vea.
           <Pressable
             onPress={actions.resume}
-            style={[styles.pausedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            style={[styles.pausedCard, { backgroundColor: colors.surface }]}
             accessibilityRole="button"
+            accessibilityLabel="Reanudar"
           >
             <Text style={[styles.pausedTitle, { color: colors.text }]}>Pausa</Text>
-            <Text style={[styles.meta, { color: colors.textMuted }]}>Toca para seguir</Text>
+            <Text style={[styles.pausedHint, { color: colors.textMuted }]}>Toca para seguir</Text>
           </Pressable>
         ) : card ? (
-          <SwipeCard key={`${card.id}-${turn.events.length}`} text={card.text} hint={rule.short} onGuess={guess} onPass={pass} />
+          <SwipeCard
+            key={`${card.id}-${turn.events.length}`}
+            text={card.text}
+            category={categoryName.get(card.category) ?? ''}
+            hint={rule.short}
+            deckDepth={state.pile.length}
+            onGuess={guess}
+            onPass={pass}
+          />
         ) : null}
       </View>
 
-      <Text style={[styles.meta, styles.center, { color: colors.textMuted }]}>
-        {guessedCount} acertadas · quedan {cardsLeft(state)} en el mazo
+      <Text style={[styles.status, { color: colors.textMuted }]}>
+        <Text style={[styles.statusStrong, { color: colors.text }]}>{guessedCount}</Text>
+        {guessedCount === 1 ? ' acertada' : ' acertadas'} · desliza o pulsa
       </Text>
 
       <View style={styles.buttons}>
-        <BigButton label="Pasar" variant="danger" size="xl" onPress={pass} disabled={paused} style={styles.flex} />
-        <BigButton label="¡Adivinada!" variant="success" size="xl" onPress={guess} disabled={paused} style={styles.flex} />
+        <BigButton label="Pasar" glyph="✕" variant="danger" size="lg" onPress={pass} disabled={paused} style={styles.button} />
+        <BigButton label="Acertada" glyph="✓" variant="success" size="lg" onPress={guess} disabled={paused} style={styles.button} />
       </View>
     </Screen>
   );
@@ -108,15 +121,15 @@ export function PlayScreen() {
 
 const styles = StyleSheet.create({
   content: { flex: 1, gap: space.md },
-  top: { gap: space.xs },
-  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  meta: { fontSize: fontSize.small + 1, fontWeight: '700' },
-  center: { textAlign: 'center' },
+  top: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   pause: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
-  pauseText: { fontSize: 18, fontWeight: '900' },
+  pauseText: { fontFamily: fonts.display, fontSize: 18 },
   cardArea: { flex: 1 },
-  pausedCard: { flex: 1, borderRadius: radius.lg, borderWidth: 2, alignItems: 'center', justifyContent: 'center', gap: space.sm },
-  pausedTitle: { fontSize: fontSize.hero, fontWeight: '900' },
+  pausedCard: { flex: 1, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  pausedTitle: { fontFamily: fonts.display, fontSize: fontSize.hero },
+  pausedHint: { fontFamily: fonts.semibold, fontSize: fontSize.body },
+  status: { fontFamily: fonts.semibold, fontSize: fontSize.small + 1, textAlign: 'center' },
+  statusStrong: { fontFamily: fonts.display },
   buttons: { flexDirection: 'row', gap: space.md },
-  flex: { flex: 1 },
+  button: { flex: 1, minHeight: 112 },
 });

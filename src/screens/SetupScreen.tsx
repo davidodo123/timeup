@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
 import { Chip } from '../components/Chip';
-import { OptionPicker } from '../components/OptionPicker';
 import { Screen } from '../components/Screen';
+import { Segmented } from '../components/Segmented';
 import { TeamEditor } from '../components/TeamEditor';
 import { CARD_LIBRARY, CATEGORIES } from '../data/cards';
 import {
@@ -18,15 +18,22 @@ import {
 import { availableCount } from '../game/deck';
 import type { CategoryId, GameSettings, PassMode, TeamDraft } from '../game/types';
 import { useGameActions } from '../state/GameProvider';
-import { space, type as fontSize, useTheme, type ThemeMode } from '../theme/ThemeProvider';
+import { fonts, radius, space, type as fontSize, useTheme, type ThemeMode } from '../theme/ThemeProvider';
 
 const DEFAULT_TEAMS: TeamDraft[] = [
   { name: '', players: ['', ''] },
   { name: '', players: ['', ''] },
 ];
 
-const PASS_LABELS: Record<PassMode, string> = { free: 'Sin penalización', penalty: '−1 punto' };
-const THEME_LABELS: Record<ThemeMode, string> = { system: 'Automático', light: 'Claro', dark: 'Oscuro' };
+const PASS_LABELS: Record<PassMode, string> = { free: 'Gratis', penalty: '−1 punto' };
+const THEME_LABELS: Record<ThemeMode, string> = { system: 'Auto', light: 'Claro', dark: 'Oscuro' };
+
+/** Las tres rondas, en la portada: explican el juego antes de configurarlo. */
+const ROUNDS = [
+  { n: 1, name: 'Describe' },
+  { n: 2, name: 'Una palabra' },
+  { n: 3, name: 'Mímica' },
+];
 
 export function SetupScreen() {
   const router = useRouter();
@@ -57,16 +64,37 @@ export function SetupScreen() {
   return (
     <Screen
       scroll
-      footer={<BigButton label="¡A jugar!" size="xl" onPress={start} disabled={teams.length < MIN_TEAMS || cardCount === 0} />}
+      footer={
+        <BigButton
+          label="¡A jugar!"
+          size="xl"
+          onPress={start}
+          disabled={teams.length < MIN_TEAMS || cardCount === 0}
+        />
+      }
     >
-      <View>
-        <Text style={[styles.title, { color: colors.text }]}>Tres Rondas</Text>
+      <View style={styles.hero}>
+        <Text style={[styles.title, { color: colors.text }]}>Tres{'\n'}Rondas</Text>
+        <View style={styles.fan}>
+          {ROUNDS.map((r) => (
+            <View
+              key={r.n}
+              style={[
+                styles.mini,
+                { backgroundColor: colors.card, borderColor: colors.cardEdge, transform: [{ rotate: `${(r.n - 2) * 7}deg` }, { translateY: r.n === 2 ? -6 : 0 }] },
+              ]}
+            >
+              <Text style={[styles.miniNum, { color: colors.cardInk }]}>{r.n}</Text>
+              <Text style={[styles.miniName, { color: colors.cardMuted }]} numberOfLines={2}>{r.name}</Text>
+            </View>
+          ))}
+        </View>
         <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-          Las mismas cartas, tres maneras de adivinarlas: describir, una palabra y mímica.
+          Las mismas cartas en las tres rondas. Pasaos el móvil y que gane quien mejor se entienda.
         </Text>
       </View>
 
-      <Section title="Equipos">
+      <Section title="Equipos" aside={`${teams.length}`}>
         {teams.map((team, i) => (
           <TeamEditor
             key={i}
@@ -88,50 +116,62 @@ export function SetupScreen() {
         ) : null}
       </Section>
 
-      <Section title="Categorías">
+      <Section title="Cartas" aside={`${available} disponibles`}>
         <View style={styles.chips}>
-          <Chip label="Aleatorio" selected={settings.categories.length === 0} onPress={() => set('categories', [])} />
+          <Chip label="Todas" selected={settings.categories.length === 0} onPress={() => set('categories', [])} />
           {CATEGORIES.map((c) => (
             <Chip key={c.id} label={c.name} selected={settings.categories.includes(c.id)} onPress={() => toggleCategory(c.id)} />
           ))}
         </View>
-        <Text style={[styles.note, { color: colors.textMuted }]}>{available} cartas disponibles</Text>
-      </Section>
-
-      <Section title="Partida">
-        <OptionPicker
-          label="Segundos por turno"
-          options={TURN_SECONDS_OPTIONS}
-          value={settings.turnSeconds}
-          onChange={(v) => set('turnSeconds', v)}
-          format={(v) => `${v} s`}
-        />
-        <OptionPicker
+        <Segmented
           label="Cartas en la partida"
           options={CARD_COUNT_OPTIONS}
           value={cardCount}
           onChange={(v) => set('cardCount', v)}
           isDisabled={(v) => v > available}
         />
-        <OptionPicker
-          label="Al pasar una carta"
+      </Section>
+
+      <Section title="Turnos">
+        <Segmented
+          label="Segundos por turno"
+          options={TURN_SECONDS_OPTIONS}
+          value={settings.turnSeconds}
+          onChange={(v) => set('turnSeconds', v)}
+        />
+        <Segmented
+          label="Pasar una carta cuesta"
           options={['free', 'penalty'] as PassMode[]}
           value={settings.passMode}
           onChange={(v) => set('passMode', v)}
           format={(v) => PASS_LABELS[v]}
         />
-        <View style={styles.chips}>
-          <Chip
-            label="Arrastrar el tiempo sobrante a la ronda siguiente"
-            selected={settings.carryOverTime}
-            onPress={() => set('carryOverTime', !settings.carryOverTime)}
+        <Pressable
+          onPress={() => set('carryOverTime', !settings.carryOverTime)}
+          style={[styles.toggle, { backgroundColor: colors.surfaceAlt }]}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: settings.carryOverTime }}
+        >
+          <View style={styles.toggleText}>
+            <Text style={[styles.toggleTitle, { color: colors.text }]}>Guardar el tiempo sobrante</Text>
+            <Text style={[styles.toggleHint, { color: colors.textMuted }]}>
+              Quien vacía el mazo empieza la ronda siguiente con el tiempo que le quedaba.
+            </Text>
+          </View>
+          <Switch
+            value={settings.carryOverTime}
+            onValueChange={(v) => set('carryOverTime', v)}
+            trackColor={{ false: colors.border, true: colors.success }}
+            thumbColor="#FFFFFF"
+            // En web react-native-web usa su propio color de bola si no se le indica.
+            {...({ activeThumbColor: '#FFFFFF' } as object)}
           />
-        </View>
+        </Pressable>
       </Section>
 
-      <Section title="Apariencia">
-        <OptionPicker
-          label="Tema"
+      <Section title="Tema">
+        <Segmented
+          label="Colores de la app"
           options={['system', 'light', 'dark'] as ThemeMode[]}
           value={mode}
           onChange={setMode}
@@ -142,21 +182,42 @@ export function SetupScreen() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, aside, children }: { title: string; aside?: string; children: ReactNode }) {
   const { colors } = useTheme();
   return (
     <View style={styles.section}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      <View style={styles.sectionHead}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+        {aside ? <Text style={[styles.aside, { color: colors.textMuted }]}>{aside}</Text> : null}
+      </View>
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: fontSize.hero - 8, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { fontSize: fontSize.body, marginTop: space.xs, lineHeight: 26 },
-  section: { gap: space.md },
-  sectionTitle: { fontSize: fontSize.heading, fontWeight: '900' },
+  hero: { gap: space.md, paddingTop: space.sm, paddingBottom: space.sm },
+  title: { fontFamily: fonts.display, fontSize: 60, lineHeight: 58, letterSpacing: -2 },
+  fan: { flexDirection: 'row', gap: space.sm, paddingVertical: space.sm },
+  mini: {
+    flex: 1,
+    aspectRatio: 0.72,
+    maxWidth: 110,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    padding: space.sm,
+    justifyContent: 'space-between',
+  },
+  miniNum: { fontFamily: fonts.display, fontSize: 40, lineHeight: 42 },
+  miniName: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 18 },
+  subtitle: { fontFamily: fonts.body, fontSize: fontSize.body, lineHeight: 26 },
+  section: { gap: space.md, marginTop: space.md },
+  sectionHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  sectionTitle: { fontFamily: fonts.display, fontSize: 30 },
+  aside: { fontFamily: fonts.semibold, fontSize: fontSize.small },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  note: { fontSize: fontSize.small },
+  toggle: { flexDirection: 'row', alignItems: 'center', gap: space.md, borderRadius: radius.md, padding: space.md },
+  toggleText: { flex: 1, gap: 2 },
+  toggleTitle: { fontFamily: fonts.bold, fontSize: 17 },
+  toggleHint: { fontFamily: fonts.body, fontSize: fontSize.small, lineHeight: 20 },
 });

@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
+import Animated, { FadeInUp } from 'react-native-reanimated';
 import { BigButton } from '../components/BigButton';
 import { ScoreBoard } from '../components/ScoreBoard';
 import { Screen } from '../components/Screen';
@@ -7,9 +8,11 @@ import { podium, type PodiumEntry } from '../game/selectors';
 import { funStats } from '../game/stats';
 import { useGame, useGameActions } from '../state/GameProvider';
 import { readableInk } from '../theme/contrast';
-import { radius, space, type as fontSize, useTheme } from '../theme/ThemeProvider';
+import { fonts, radius, space, type as fontSize, useTheme } from '../theme/ThemeProvider';
 
-const STEP_HEIGHT: Record<number, number> = { 1: 150, 2: 110, 3: 80 };
+const STEP_HEIGHT: Record<number, number> = { 1: 140, 2: 100, 3: 70 };
+/** El podio se revela de abajo arriba: 3.º, 2.º y por último el ganador. */
+const REVEAL_DELAY: Record<number, number> = { 3: 0, 2: 250, 1: 550 };
 
 /** Pantalla final: podio, marcador por rondas y estadísticas divertidas. */
 export function PodiumScreen() {
@@ -41,13 +44,13 @@ export function PodiumScreen() {
       scroll
       footer={
         <View style={styles.actions}>
-          <BigButton label="Revancha" size="lg" onPress={rematch} />
-          <BigButton label="Nueva partida" variant="ghost" size="md" onPress={newGame} />
+          <BigButton label="Nueva partida" variant="ghost" size="lg" onPress={newGame} style={styles.flex} />
+          <BigButton label="Revancha" size="lg" onPress={rematch} style={styles.flex} />
         </View>
       }
     >
       <View style={styles.header}>
-        <Text style={[styles.kicker, { color: colors.textMuted }]}>{winners.length > 1 ? 'Empate' : 'Gana'}</Text>
+        <Text style={[styles.kicker, { color: colors.textMuted }]}>{winners.length > 1 ? 'Empate entre' : 'Ha ganado'}</Text>
         <Text style={[styles.winner, { color: colors.text }]} adjustsFontSizeToFit numberOfLines={2}>
           {winners.map((w) => w.team.name).join(' y ')}
         </Text>
@@ -55,25 +58,32 @@ export function PodiumScreen() {
 
       <View style={styles.podium}>
         {visual.map((entry) => (
-          <View key={entry.team.id} style={styles.column}>
+          <Animated.View
+            key={entry.team.id}
+            entering={FadeInUp.delay(REVEAL_DELAY[entry.place] ?? 0).springify().damping(14)}
+            style={styles.column}
+          >
             <Text style={[styles.colName, { color: colors.text }]} numberOfLines={1}>{entry.team.name}</Text>
             <Text style={[styles.colPoints, { color: colors.textMuted }]}>{entry.total} pts</Text>
             <View style={[styles.step, { height: STEP_HEIGHT[entry.place] ?? 60, backgroundColor: entry.team.color }]}>
               <Text style={[styles.place, { color: readableInk(entry.team.color) }]}>{entry.place}</Text>
             </View>
-          </View>
+          </Animated.View>
         ))}
       </View>
 
-      <ScoreBoard scores={ranking} upToRound={3} highlightTeamId={winners[0]?.team.id} />
+      <ScoreBoard scores={ranking} upToRound={3} />
 
       {stats.length > 0 ? (
         <View style={styles.stats}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Momentos de la partida</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Lo mejor de la partida</Text>
           {stats.map((s) => (
-            <View key={s.id} style={[styles.stat, { backgroundColor: colors.surface, borderLeftColor: s.team.color }]}>
+            <View key={s.id} style={[styles.stat, { backgroundColor: colors.surface }]}>
               <Text style={[styles.statTitle, { color: colors.textMuted }]}>{s.title}</Text>
-              <Text style={[styles.statTeam, { color: colors.text }]}>{s.team.name}</Text>
+              <View style={styles.statTeam}>
+                <View style={[styles.dot, { backgroundColor: s.team.color }]} />
+                <Text style={[styles.statTeamName, { color: colors.text }]} numberOfLines={1}>{s.team.name}</Text>
+              </View>
               <Text style={[styles.statDetail, { color: colors.text }]}>{s.detail}</Text>
             </View>
           ))}
@@ -84,20 +94,23 @@ export function PodiumScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { alignItems: 'center' },
-  kicker: { fontSize: fontSize.body, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 2 },
-  winner: { fontSize: fontSize.hero, fontWeight: '900', textAlign: 'center' },
-  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.sm },
+  header: { alignItems: 'center', gap: 2 },
+  kicker: { fontFamily: fonts.bold, fontSize: fontSize.body },
+  winner: { fontFamily: fonts.display, fontSize: 58, lineHeight: 62, textAlign: 'center', letterSpacing: -1.5 },
+  podium: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: space.sm, marginTop: space.sm },
   column: { flex: 1, maxWidth: 130, alignItems: 'center', gap: 2 },
-  colName: { fontSize: fontSize.body, fontWeight: '900' },
-  colPoints: { fontSize: fontSize.small, fontWeight: '700', marginBottom: space.xs },
+  colName: { fontFamily: fonts.display, fontSize: fontSize.body, maxWidth: '100%' },
+  colPoints: { fontFamily: fonts.semibold, fontSize: fontSize.small, marginBottom: space.xs },
   step: { alignSelf: 'stretch', borderTopLeftRadius: radius.md, borderTopRightRadius: radius.md, alignItems: 'center', paddingTop: space.sm },
-  place: { fontSize: fontSize.title, fontWeight: '900' },
-  stats: { gap: space.sm },
-  sectionTitle: { fontSize: fontSize.heading, fontWeight: '900' },
-  stat: { borderRadius: radius.md, borderLeftWidth: 6, padding: space.md, gap: 2 },
-  statTitle: { fontSize: fontSize.small, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
-  statTeam: { fontSize: fontSize.heading, fontWeight: '900' },
-  statDetail: { fontSize: fontSize.body, lineHeight: 24 },
-  actions: { gap: space.sm },
+  place: { fontFamily: fonts.display, fontSize: 40 },
+  stats: { gap: space.sm, marginTop: space.sm },
+  sectionTitle: { fontFamily: fonts.display, fontSize: 28 },
+  stat: { borderRadius: radius.lg, padding: space.md, gap: 4 },
+  statTitle: { fontFamily: fonts.bold, fontSize: fontSize.small },
+  statTeam: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  dot: { width: 14, height: 14, borderRadius: 7 },
+  statTeamName: { flexShrink: 1, fontFamily: fonts.display, fontSize: fontSize.heading - 2 },
+  statDetail: { fontFamily: fonts.body, fontSize: fontSize.body - 1, lineHeight: 23 },
+  actions: { flexDirection: 'row', gap: space.sm },
+  flex: { flex: 1 },
 });

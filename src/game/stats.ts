@@ -25,11 +25,13 @@ export function funStats(state: GameState): FunStat[] {
   }
   if (fastest) {
     const card = state.cards.find((c) => c.id === fastest.cardId);
+    const team = teamById.get(fastest.teamId)!;
+    const who = fastest.player !== team.name ? ` (describía ${fastest.player})` : '';
     stats.push({
       id: 'fastest',
       title: 'Acierto relámpago',
-      team: teamById.get(fastest.teamId)!,
-      detail: `«${card?.text ?? '?'}» en ${seconds(fastest.ms)} (describía ${fastest.player})`,
+      team,
+      detail: `«${card?.text ?? '?'}» en ${seconds(fastest.ms)}${who}`,
     });
   }
 
@@ -60,11 +62,13 @@ export function funStats(state: GameState): FunStat[] {
   // Mejor turno.
   const bestTurn = maxBy(state.history, (r) => r.guessed.length);
   if (bestTurn && bestTurn.guessed.length > 0) {
+    const team = teamById.get(bestTurn.teamId)!;
+    const who = bestTurn.player !== team.name ? bestTurn.player : 'El equipo';
     stats.push({
       id: 'best-turn',
       title: 'Turno de leyenda',
-      team: teamById.get(bestTurn.teamId)!,
-      detail: `${bestTurn.player} sacó ${bestTurn.guessed.length} cartas en un turno (ronda ${bestTurn.round})`,
+      team,
+      detail: `${who} sacó ${bestTurn.guessed.length} cartas en un turno (ronda ${bestTurn.round})`,
     });
   }
 

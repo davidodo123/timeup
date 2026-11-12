@@ -1,14 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { RoundPips } from '../components/RoundPips';
 import { ScoreBoard } from '../components/ScoreBoard';
 import { Screen } from '../components/Screen';
 import { ROUND_RULES } from '../game/constants';
-import { currentPlayer, currentTeam, scores } from '../game/selectors';
+import { currentPlayer, currentTeam, describer, scores } from '../game/selectors';
 import type { RoundNumber } from '../game/types';
 import { useGame, useGameActions } from '../state/GameProvider';
-import { radius, space, type as fontSize, useTheme } from '../theme/ThemeProvider';
+import { fonts, radius, space, type as fontSize, useTheme } from '../theme/ThemeProvider';
 
-/** Entre rondas: marcador y reglas de la ronda que viene. */
+/** Entre rondas: marcador y la carta de la ronda que viene. */
 export function RoundEndScreen() {
   const state = useGame();
   const { nextRound } = useGameActions();
@@ -16,33 +17,47 @@ export function RoundEndScreen() {
   const next = (state.round + 1) as RoundNumber;
   const rule = ROUND_RULES[next];
   const team = currentTeam(state);
+  const sorted = scores(state).sort((a, b) => b.total - a.total);
+  const who = team ? describer(team, currentPlayer(state)) : null;
 
   return (
     <Screen scroll footer={<BigButton label={`Empezar ronda ${next}`} size="xl" onPress={nextRound} />}>
-      <Text style={[styles.title, { color: colors.text }]}>Fin de la ronda {state.round}</Text>
-      <ScoreBoard scores={scores(state)} upToRound={state.round} />
-
-      <View style={[styles.next, { backgroundColor: colors.surface, borderColor: colors.accent }]}>
-        <Text style={[styles.kicker, { color: colors.accent }]}>Siguiente</Text>
-        <Text style={[styles.ruleTitle, { color: colors.text }]}>{rule.title}</Text>
-        <Text style={[styles.rule, { color: colors.text }]}>{rule.description}</Text>
-        <Text style={[styles.rule, { color: colors.textMuted }]}>
-          Se barajan otra vez las {state.cards.length} cartas.
-        </Text>
-        {state.carryOverMs && team ? (
-          <Text style={[styles.rule, { color: colors.text }]}>
-            Empieza {currentPlayer(state)} ({team.name}) con los {Math.round(state.carryOverMs / 1000)} s que le sobraron.
-          </Text>
-        ) : null}
+      <View style={styles.header}>
+        <RoundPips round={state.round} />
+        <Text style={[styles.title, { color: colors.text }]}>Ronda {state.round}{'\n'}terminada</Text>
       </View>
+
+      <ScoreBoard scores={sorted} upToRound={state.round} />
+
+      <View style={[styles.next, { backgroundColor: colors.card }]}>
+        <Text style={[styles.nextNum, { color: colors.cardInk }]}>{next}</Text>
+        <View style={styles.nextText}>
+          <Text style={[styles.kicker, { color: colors.cardMuted }]}>Siguiente ronda</Text>
+          <Text style={[styles.ruleTitle, { color: colors.cardInk }]}>{rule.short}</Text>
+          <Text style={[styles.rule, { color: colors.cardInk }]}>{rule.description}</Text>
+          <Text style={[styles.rule, { color: colors.cardMuted }]}>
+            Se barajan otra vez las {state.cards.length} cartas.
+          </Text>
+        </View>
+      </View>
+
+      {state.carryOverMs && team ? (
+        <Text style={[styles.carry, { color: colors.text }]}>
+          Empieza {who ? `${who} (${team.name})` : team.name} con los {Math.round(state.carryOverMs / 1000)} s que le sobraron.
+        </Text>
+      ) : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: fontSize.title + 4, fontWeight: '900' },
-  next: { borderRadius: radius.lg, borderWidth: 3, padding: space.lg, gap: space.sm },
-  kicker: { fontSize: fontSize.small, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
-  ruleTitle: { fontSize: fontSize.heading, fontWeight: '900' },
-  rule: { fontSize: fontSize.body, lineHeight: 26 },
+  header: { gap: space.md },
+  title: { fontFamily: fonts.display, fontSize: 48, lineHeight: 50, letterSpacing: -1 },
+  next: { flexDirection: 'row', gap: space.md, borderRadius: radius.lg, padding: space.lg },
+  nextNum: { fontFamily: fonts.display, fontSize: 80, lineHeight: 80 },
+  nextText: { flex: 1, gap: 4 },
+  kicker: { fontFamily: fonts.bold, fontSize: fontSize.small },
+  ruleTitle: { fontFamily: fonts.display, fontSize: fontSize.heading },
+  rule: { fontFamily: fonts.body, fontSize: fontSize.body - 1, lineHeight: 23 },
+  carry: { fontFamily: fonts.semibold, fontSize: fontSize.body, lineHeight: 25 },
 });

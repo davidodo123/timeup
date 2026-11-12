@@ -12,6 +12,14 @@ export function currentPlayer(state: GameState): string {
   return team ? playerName(team) : '';
 }
 
+/**
+ * Nombre de quien describe, o `null` si el equipo no tiene jugadores con
+ * nombre (entonces el "jugador" es el propio equipo y no hay que repetirlo).
+ */
+export function describer(team: Team, player: string): string | null {
+  return player && player !== team.name ? player : null;
+}
+
 export function cardById(state: GameState, id: string | null): Card | null {
   if (!id) return null;
   return state.cards.find((c) => c.id === id) ?? null;

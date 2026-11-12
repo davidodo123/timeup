@@ -1,3 +1,10 @@
+import {
+  BricolageGrotesque_400Regular,
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/bricolage-grotesque';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
@@ -7,6 +14,16 @@ import { GameProvider } from '../state/GameProvider';
 import { ThemeProvider, useTheme } from '../theme/ThemeProvider';
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    BricolageGrotesque_400Regular,
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
+  });
+
+  // Si la fuente falla, se sigue con la del sistema en vez de dejar la app en blanco.
+  if (!fontsLoaded && !fontError) return null;
+
   return (
     <GestureHandlerRootView style={styles.fill}>
       <SafeAreaProvider>

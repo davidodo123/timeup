@@ -1,19 +1,19 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { WARNING_SECONDS } from '../game/constants';
-import { radius, space, useTheme } from '../theme/ThemeProvider';
+import { fonts, radius, space, useTheme } from '../theme/ThemeProvider';
 
 interface Props {
   remainingMs: number;
   totalMs: number;
 }
 
-/** Cuenta atrás grande con barra de progreso. Se pone en rojo en los últimos segundos. */
+/** Cuenta atrás grande con barra. En los últimos segundos todo se pone rojo. */
 export function TimerBar({ remainingMs, totalMs }: Props) {
   const { colors } = useTheme();
   const seconds = Math.ceil(remainingMs / 1000);
   const warning = seconds <= WARNING_SECONDS;
   const pct = totalMs > 0 ? Math.max(0, Math.min(1, remainingMs / totalMs)) : 0;
-  const tint = warning ? colors.danger : colors.primary;
+  const tint = warning ? colors.danger : colors.text;
 
   return (
     <View
@@ -22,17 +22,18 @@ export function TimerBar({ remainingMs, totalMs }: Props) {
       accessibilityLabel={`${seconds} segundos`}
       accessibilityLiveRegion={warning ? 'assertive' : 'none'}
     >
-      <Text style={[styles.seconds, { color: tint }]}>{seconds}</Text>
+      <Text style={[styles.seconds, { color: tint }, warning && styles.big]}>{seconds}</Text>
       <View style={[styles.track, { backgroundColor: colors.surfaceAlt }]}>
-        <View style={[styles.fill, { width: `${pct * 100}%`, backgroundColor: tint }]} />
+        <View style={[styles.fill, { width: `${pct * 100}%`, backgroundColor: warning ? colors.danger : colors.primary }]} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: space.sm },
-  seconds: { fontSize: 64, fontWeight: '900', fontVariant: ['tabular-nums'], lineHeight: 70 },
-  track: { height: 14, alignSelf: 'stretch', borderRadius: radius.pill, overflow: 'hidden' },
+  wrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.md },
+  seconds: { fontFamily: fonts.display, fontSize: 44, fontVariant: ['tabular-nums'], minWidth: 58, textAlign: 'right' },
+  big: { fontSize: 52 },
+  track: { flex: 1, height: 12, borderRadius: radius.pill, overflow: 'hidden' },
   fill: { height: '100%', borderRadius: radius.pill },
 });

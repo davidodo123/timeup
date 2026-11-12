@@ -1,14 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { BigButton } from '../components/BigButton';
+import { RoundPips } from '../components/RoundPips';
 import { Screen } from '../components/Screen';
 import { ROUND_RULES } from '../game/constants';
-import { cardsLeft, currentPlayer, currentTeam } from '../game/selectors';
+import { cardsLeft, currentPlayer, currentTeam, describer } from '../game/selectors';
 import { haptics } from '../services/haptics';
 import { useGame, useGameActions } from '../state/GameProvider';
 import { readableInk } from '../theme/contrast';
-import { radius, space, type as fontSize } from '../theme/ThemeProvider';
+import { fonts, radius, space, type as fontSize } from '../theme/ThemeProvider';
 
-/** "Turno del equipo X. Pásale el móvil a Y." Fondo con el color del equipo. */
+/** "Turno de X. Pásale el móvil a Y." Toda la pantalla con el color del equipo. */
 export function TurnIntroScreen() {
   const state = useGame();
   const { startTurn } = useGameActions();
@@ -16,11 +17,10 @@ export function TurnIntroScreen() {
   if (!team) return null;
 
   const ink = readableInk(team.color);
-  const veil = ink === '#FFFFFF' ? 'rgba(0,0,0,0.22)' : 'rgba(255,255,255,0.35)';
+  const veil = ink === '#FFFFFF' ? 'rgba(0,0,0,0.18)' : 'rgba(255,255,255,0.4)';
   const rule = ROUND_RULES[state.round];
-  const player = currentPlayer(state);
+  const who = describer(team, currentPlayer(state));
   const seconds = Math.round((state.carryOverMs ?? state.settings.turnSeconds * 1000) / 1000);
-  const hasPlayer = player !== team.name;
   const text = { color: ink };
 
   return (
@@ -31,9 +31,10 @@ export function TurnIntroScreen() {
         <BigButton
           label="¡Empezar!"
           size="xl"
-          variant="ghost"
-          textColor={ink}
-          style={{ backgroundColor: veil, borderColor: ink }}
+          // Botón en tinta sólida con el color del equipo: máximo contraste en cualquier color.
+          backgroundColor={ink}
+          textColor={team.color}
+          style={styles.start}
           onPress={() => {
             haptics.tap();
             startTurn();
@@ -41,26 +42,30 @@ export function TurnIntroScreen() {
         />
       }
     >
-      <View style={[styles.pill, { backgroundColor: veil }]}>
-        <Text style={[styles.pillText, text]}>{rule.title}</Text>
+      <View style={styles.top}>
+        <RoundPips round={state.round} ink={ink} />
+        <Text style={[styles.meta, text]}>
+          {seconds} s{state.carryOverMs ? ' sobrantes' : ''} · {cardsLeft(state)} cartas
+        </Text>
       </View>
 
       <View style={styles.center}>
         <Text style={[styles.label, text]}>Turno de</Text>
         <Text style={[styles.team, text]} adjustsFontSizeToFit numberOfLines={2}>{team.name}</Text>
-        <Text style={[styles.label, styles.gap, text]}>
-          {hasPlayer ? 'Pásale el móvil a' : 'Pásale el móvil a quien describe'}
-        </Text>
-        {hasPlayer ? (
-          <Text style={[styles.player, text]} adjustsFontSizeToFit numberOfLines={1}>{player}</Text>
-        ) : null}
+
+        <View style={[styles.ticket, { backgroundColor: veil }]}>
+          <Text style={[styles.label, text]}>Pásale el móvil a</Text>
+          {who ? (
+            <Text style={[styles.player, text]} adjustsFontSizeToFit numberOfLines={1}>{who}</Text>
+          ) : (
+            <Text style={[styles.playerGeneric, text]}>quien vaya a describir</Text>
+          )}
+        </View>
       </View>
 
-      <View style={[styles.info, { backgroundColor: veil }]}>
-        <Text style={[styles.rule, text]}>{rule.description}</Text>
-        <Text style={[styles.meta, text]}>
-          {seconds} s{state.carryOverMs ? ' (el tiempo que te sobró)' : ''} · quedan {cardsLeft(state)} cartas
-        </Text>
+      <View style={styles.rule}>
+        <Text style={[styles.ruleTitle, text]}>{rule.title}</Text>
+        <Text style={[styles.ruleText, text]}>{rule.description}</Text>
       </View>
     </Screen>
   );
@@ -68,14 +73,23 @@ export function TurnIntroScreen() {
 
 const styles = StyleSheet.create({
   content: { justifyContent: 'space-between' },
-  pill: { alignSelf: 'center', borderRadius: radius.pill, paddingHorizontal: space.md, paddingVertical: space.xs },
-  pillText: { fontSize: fontSize.body, fontWeight: '800' },
-  center: { alignItems: 'center' },
-  label: { fontSize: fontSize.heading, fontWeight: '700', textAlign: 'center' },
-  gap: { marginTop: space.xl },
-  team: { fontSize: fontSize.hero, fontWeight: '900', textAlign: 'center' },
-  player: { fontSize: fontSize.hero + 8, fontWeight: '900', textAlign: 'center' },
-  info: { borderRadius: radius.lg, padding: space.md, gap: space.xs },
-  rule: { fontSize: fontSize.body, fontWeight: '700', textAlign: 'center', lineHeight: 26 },
-  meta: { fontSize: fontSize.small, textAlign: 'center' },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  meta: { fontFamily: fonts.bold, fontSize: fontSize.small + 1 },
+  center: { alignItems: 'center', gap: space.xs },
+  label: { fontFamily: fonts.semibold, fontSize: fontSize.body + 2, textAlign: 'center' },
+  team: { fontFamily: fonts.display, fontSize: 64, lineHeight: 68, textAlign: 'center', letterSpacing: -1.5 },
+  ticket: {
+    marginTop: space.lg,
+    alignSelf: 'stretch',
+    borderRadius: radius.lg,
+    paddingVertical: space.md,
+    paddingHorizontal: space.lg,
+    alignItems: 'center',
+  },
+  player: { fontFamily: fonts.display, fontSize: 44, lineHeight: 50, textAlign: 'center' },
+  playerGeneric: { fontFamily: fonts.display, fontSize: 30, lineHeight: 34, textAlign: 'center' },
+  rule: { gap: 4 },
+  ruleTitle: { fontFamily: fonts.display, fontSize: fontSize.heading, textAlign: 'center' },
+  ruleText: { fontFamily: fonts.semibold, fontSize: fontSize.body - 1, textAlign: 'center', lineHeight: 24 },
+  start: { borderRadius: radius.lg },
 });
